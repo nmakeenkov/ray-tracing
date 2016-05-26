@@ -30,10 +30,27 @@ void Initialize() {
     glOrtho(0.0, 700.0, 0.0, 700.0, -1.0, 1.0);
 }
 
+#include "MultiThreading/MultiThreading.h"
+#include <future>
+
+#include <cstdlib>
+
+void f(int a) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(rand() % 1000));
+    cerr << a << "\n";
+}
+
 int main(int argc, char **argv) {
 
-    auto scene = Readers::ReadSTL::read("MyGL/Examples/xBowl.stl");
-    //auto scene = Readers::ReadSTL::read("MyGL/Examples/monster.stl");
+    MultiThreading::ThreadPool tp(3);
+    for (int i = 0; i < 20; ++i) {
+        tp.addTask(std::bind(f, i));
+    }
+
+    return 0;
+
+    //auto scene = Readers::ReadSTL::read("MyGL/Examples/xBowl.stl");
+    auto scene = Readers::ReadSTL::read("MyGL/Examples/monster.stl");
     //auto scene = Examples().redTriangle;
 
     scene.rayTrace(pixels);

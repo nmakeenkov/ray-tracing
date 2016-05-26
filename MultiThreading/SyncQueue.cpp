@@ -44,6 +44,22 @@ void SyncQueue<T>::pop() {
 }
 
 template <typename T>
+bool SyncQueue<T>::tryPop(int milliseconds, T &result) {
+    std::unique_lock<std::mutex> uniqueLock(mMutex);
+    if (!mAbleToPop.wait_for(uniqueLock, std::chrono::milliseconds(milliseconds),
+                             [this]{ return !mQueue.empty(); })) {
+        return false;
+    }
+    result = mQueue.front();
+    mQueue.pop();
+    T *newFront = NULL;
+    if (!mQueue.empty()) {
+        newFront = &mQueue.front();
+    }
+    mFront.store(newFront);
+}
+
+template <typename T>
 std::size_t SyncQueue<T>::size() {
     std::unique_lock<std::mutex> uniqueLock(mMutex);
     return mQueue.size();

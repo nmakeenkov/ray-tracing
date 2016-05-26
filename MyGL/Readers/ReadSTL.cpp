@@ -63,6 +63,7 @@ MyGL::Scene ReadSTL::readBinary(const char *fileName) {
     fin.read(tmp, 80);
     unsigned int triangleCount;
     fin.read((char *)&triangleCount, 4);
+    triangleCount = 800;
     cerr << triangleCount << endl;
     float x, y, z;
     unsigned int attribute;
