@@ -37,7 +37,6 @@ namespace MultiThreading {
     };
 
 
-    #define Callable std::function<void()>
     class ThreadPool {
     public:
         ThreadPool(int threads = -1) : mThreads() {
@@ -51,8 +50,7 @@ namespace MultiThreading {
             }
         }
 
-
-        void addTask(Callable const &task) {
+        void addTask(std::function<void()> const &task) {
             mQueue.push(task);
         }
 
@@ -74,7 +72,7 @@ namespace MultiThreading {
                 if (mFinished.load()) {
                     return;
                 }
-                Callable func;
+                std::function<void()> func;
                 if (!mQueue.tryPop(TIME_OUT, func)) {
                     continue;
                 }
@@ -83,7 +81,7 @@ namespace MultiThreading {
         }
 
         std::vector<std::thread> mThreads;
-        SyncQueue<Callable> mQueue;
+        SyncQueue<std::function<void()>> mQueue;
         std::atomic<bool> mFinished;
     };
 }

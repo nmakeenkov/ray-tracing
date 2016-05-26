@@ -56,7 +56,7 @@ MyGL::Scene ReadSTL::readBinary(const char *fileName) {
                 Parallelogram(Vector(-50, -50, -50),
                               Vector(-50, -50, 50),
                               Vector(-50, 50, 50)),
-                make_pair(700, 700));
+                make_pair(700, 700), 4);
     scene.addLight(Vector(-100, -100, -100), 100000.);
     ifstream fin(fileName, ios::binary|ios::in);
     char *tmp = new char[100];

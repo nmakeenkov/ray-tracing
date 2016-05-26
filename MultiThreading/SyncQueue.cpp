@@ -57,6 +57,7 @@ bool SyncQueue<T>::tryPop(int milliseconds, T &result) {
         newFront = &mQueue.front();
     }
     mFront.store(newFront);
+    return true;
 }
 
 template <typename T>

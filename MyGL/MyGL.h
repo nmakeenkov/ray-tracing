@@ -27,7 +27,7 @@ namespace MyGL {
     public:
         Scene();
         Scene(Geometry3d::Vector camera, Geometry3d::Parallelogram screen,
-              std::pair<int, int> resolution);
+              std::pair<int, int> resolution, int threads = -1);
 
         void addUnit(Geometry3d::Shape *shape, Color color);
         void addUnit(Geometry3d::Shape const &shape, Color color);
@@ -39,6 +39,7 @@ namespace MyGL {
         Geometry3d::Vector mCamera;
         Geometry3d::Parallelogram mScreen;
     private:
+        static const int RECTANGLE_COUNT_SQRT = 25;
         class LightSource {
         public:
             LightSource() { }
@@ -111,6 +112,9 @@ namespace MyGL {
                                                       Geometry3d::Ray const &ray) const;
         };
 
+        void traceRectangle(Geometry3d::Vector const &axis0, Geometry3d::Vector const &axis1,
+                            int xFrom, int xTo, int yFrom, int yTo,
+                            std::vector<std::vector<Color>> &pixels);
         Color trace(Geometry3d::Ray const &ray) const;
 
         std::pair<int, int> mResolution;
@@ -118,6 +122,7 @@ namespace MyGL {
         KDTree mKDTree;
         std::vector<Unit> mUnits;
         std::vector<LightSource> mLights;
+        int mThreads;
     };
 
 };
