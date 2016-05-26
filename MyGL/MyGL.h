@@ -1,0 +1,125 @@
+#ifndef GRAPHIC_LIBRARY_GL_H
+#define GRAPHIC_LIBRARY_GL_H
+
+#include "../Geometry3d/Geometry3d.h"
+#include <vector>
+#include <cmath>
+
+namespace MyGL {
+
+    class Color {
+    public:
+        Color();
+        Color(unsigned char red, unsigned char green, unsigned char blue);
+        unsigned char mRed, mGreen, mBlue;
+
+        Color operator*(double c) const {
+            return Color(std::min(255., c * mRed), std::min(255., c * mGreen), std::min(255., c * mBlue));
+        }
+
+        Color operator+(Color const &other) const {
+            return Color(std::min(255, mRed + other.mRed), std::min(255, mGreen + other.mGreen), std::min(255, mBlue + other.mBlue));
+        }
+    };
+
+
+    class Scene {
+    public:
+        Scene();
+        Scene(Geometry3d::Vector camera, Geometry3d::Parallelogram screen,
+              std::pair<int, int> resolution);
+
+        void addUnit(Geometry3d::Shape *shape, Color color);
+        void addUnit(Geometry3d::Shape const &shape, Color color);
+        void addLight(Geometry3d::Vector const &source, double strength) {
+            mLights.push_back(LightSource(source, strength));
+        }
+        void rayTrace(std::vector<std::vector<Color>> &pixels);
+
+        Geometry3d::Vector mCamera;
+        Geometry3d::Parallelogram mScreen;
+    private:
+        class LightSource {
+        public:
+            LightSource() { }
+            LightSource(Geometry3d::Vector const &source, double strength) : mSource(source), mStrength(strength) { }
+
+            double getIntencity(Geometry3d::Vector const &point, Geometry3d::Vector const &normal) const {
+                return mStrength * (Geometry3d::Vector::scalarProduction(normal, point - mSource))
+                / pow(point.distanceTo(mSource), 3.); // 3, as we have an extra multiplier from scalar production
+            }
+
+            Geometry3d::Vector mSource;
+            double mStrength;
+
+        };
+
+        class BoundingBox {
+        public:
+            BoundingBox();
+            BoundingBox(double Xmin, double Xmax,
+                        double Ymin, double Ymax,
+                        double Zmin, double Zmax);
+            BoundingBox(Geometry3d::Shape const *);
+            bool intersects(Geometry3d::Ray const &ray) const;
+
+            void updateSides();
+            void expand(BoundingBox const &other); // do not forget to update sides after it
+
+            double mXmin, mXmax, mYmin, mYmax, mZmin, mZmax;
+            Geometry3d::Parallelogram sides[6];
+        };
+
+        class Unit {
+        public:
+            Unit();
+            Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color);
+            Geometry3d::Shape *mShape;
+            BoundingBox mBoundingBox;
+            Color mColor;
+        };
+
+        class KDTree {
+        public:
+            KDTree();
+            void build(std::vector<Unit> &units);
+            std::pair<Unit*, double> trace(Geometry3d::Vector camera, Geometry3d::Ray const &) const;
+            void operator=(KDTree const &other);
+
+        private:
+            const unsigned int MAX_COUNT_IN_LEAF = 10;
+
+            class Node {
+            public:
+                enum Axes {
+                    AXIS_X = 0,
+                    AXIS_Y = 1,
+                    AXIS_Z = 2
+                };
+                Axes mSplitAxis;
+                unsigned int mCount;
+                BoundingBox mBoundingBox;
+                Node *mLeft; // <= splitValue
+                Node *mRight; // > splitValue
+                std::vector<Unit> mUnits; // only in leaves
+                Node();
+            };
+
+            Node *mRoot;
+            void buildRecursively(Node *node, Unit *units);
+            std::pair<Unit*, double> traceRecursively(Node *node, Geometry3d::Vector camera,
+                                                      Geometry3d::Ray const &ray) const;
+        };
+
+        Color trace(Geometry3d::Ray const &ray) const;
+
+        std::pair<int, int> mResolution;
+
+        KDTree mKDTree;
+        std::vector<Unit> mUnits;
+        std::vector<LightSource> mLights;
+    };
+
+};
+
+#endif // GRAPHIC_LIBRARY_GL_H
