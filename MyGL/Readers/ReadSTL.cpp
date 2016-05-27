@@ -2,6 +2,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include "../../Geometry3d/Sphere.h"
 
 using namespace std;
 using namespace MyGL;
@@ -57,13 +58,13 @@ MyGL::Scene ReadSTL::readBinary(const char *fileName) {
                               Vector(-50, -50, 50),
                               Vector(-50, 50, 50)),
                 make_pair(700, 700), 4);
-    scene.addLight(Vector(-100, -100, -100), 100000.);
+    scene.addLight(Vector(-100, 0, 100), 60000.);
     ifstream fin(fileName, ios::binary|ios::in);
     char *tmp = new char[100];
     fin.read(tmp, 80);
     unsigned int triangleCount;
     fin.read((char *)&triangleCount, 4);
-    triangleCount = 800;
+    //triangleCount = 800;
     cerr << triangleCount << endl;
     float x, y, z;
     unsigned int attribute;
@@ -85,5 +86,10 @@ MyGL::Scene ReadSTL::readBinary(const char *fileName) {
     }
     delete tmp;
     fin.close();
+
+    Geometry3d::Shape *fig = (Geometry3d::Shape *)new Geometry3d::Sphere(
+           Geometry3d::Vector(0, 50, -50), 25);
+    scene.addUnit(fig, MyGL::Color(0, 0, 200), 0.8);
+
     return scene;
 }

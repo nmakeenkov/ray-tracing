@@ -15,13 +15,13 @@ namespace Geometry3d {
 
         virtual Intersection intersect(Ray const &) const;
         virtual std::vector<Vector> getPoints() const;
-        virtual Vector getNormal() const {
-            auto ans = Vector::vectorProduction(mPoints[1] - mPoints[0], mPoints[2] - mPoints[0]);
-            return ans / ans.abs();
+        virtual Vector getNormal(Vector const &point) const {
+            return mNormal;
         }
         virtual Shape *clone() const;
     private:
         Vector mPoints[3];
+        Vector mNormal;
         Plane mPlane;
     };
 

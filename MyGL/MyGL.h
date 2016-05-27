@@ -11,14 +11,14 @@ namespace MyGL {
     public:
         Color();
         Color(unsigned char red, unsigned char green, unsigned char blue);
-        unsigned char mRed, mGreen, mBlue;
+        double mRed, mGreen, mBlue;
 
         Color operator*(double c) const {
             return Color(std::min(255., c * mRed), std::min(255., c * mGreen), std::min(255., c * mBlue));
         }
 
         Color operator+(Color const &other) const {
-            return Color(std::min(255, mRed + other.mRed), std::min(255, mGreen + other.mGreen), std::min(255, mBlue + other.mBlue));
+            return Color(std::min(255., mRed + other.mRed), std::min(255., mGreen + other.mGreen), std::min(255., mBlue + other.mBlue));
         }
     };
 
@@ -29,8 +29,8 @@ namespace MyGL {
         Scene(Geometry3d::Vector camera, Geometry3d::Parallelogram screen,
               std::pair<int, int> resolution, int threads = -1);
 
-        void addUnit(Geometry3d::Shape *shape, Color color);
-        void addUnit(Geometry3d::Shape const &shape, Color color);
+        void addUnit(Geometry3d::Shape *shape, Color color, double reflectance = 0);
+        void addUnit(Geometry3d::Shape const &shape, Color color, double reflectance = 0);
         void addLight(Geometry3d::Vector const &source, double strength) {
             mLights.push_back(LightSource(source, strength));
         }
@@ -40,14 +40,16 @@ namespace MyGL {
         Geometry3d::Parallelogram mScreen;
     private:
         static const int RECTANGLE_COUNT_SQRT = 25;
+        static const int MAX_REFLECTION_DEPTH = 5;
         class LightSource {
         public:
             LightSource() { }
             LightSource(Geometry3d::Vector const &source, double strength) : mSource(source), mStrength(strength) { }
 
             double getIntencity(Geometry3d::Vector const &point, Geometry3d::Vector const &normal) const {
-                return mStrength * (Geometry3d::Vector::scalarProduction(normal, point - mSource))
-                / pow(point.distanceTo(mSource), 3.); // 3, as we have an extra multiplier from scalar production
+                return fabs(mStrength * (Geometry3d::Vector::scalarProduction(normal, mSource - point))
+                            / pow(point.distanceTo(mSource), 3.)); // 3, as there's an extra multiplier
+                                                                   // from scalar production
             }
 
             Geometry3d::Vector mSource;
@@ -74,10 +76,11 @@ namespace MyGL {
         class Unit {
         public:
             Unit();
-            Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color);
+            Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color, double reflectance = 0);
             Geometry3d::Shape *mShape;
             BoundingBox mBoundingBox;
-            Color mColor;
+            Color mColor;\
+            double mReflectance;
         };
 
         class KDTree {
@@ -91,6 +94,7 @@ namespace MyGL {
             const unsigned int MAX_COUNT_IN_LEAF = 10;
 
             class Node {
+
             public:
                 enum Axes {
                     AXIS_X = 0,
@@ -115,7 +119,7 @@ namespace MyGL {
         void traceRectangle(Geometry3d::Vector const &axis0, Geometry3d::Vector const &axis1,
                             int xFrom, int xTo, int yFrom, int yTo,
                             std::vector<std::vector<Color>> &pixels);
-        Color trace(Geometry3d::Ray const &ray) const;
+        Color trace(Geometry3d::Ray const &ray, int curDepth = 0) const;
 
         std::pair<int, int> mResolution;
 

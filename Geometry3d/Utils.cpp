@@ -11,3 +11,7 @@ int Utils::sign(double a) {
     }
     return 0;
 }
+
+double Utils::sqr(double x) {
+    return x * x;
+}

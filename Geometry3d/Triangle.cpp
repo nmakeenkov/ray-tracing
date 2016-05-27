@@ -10,6 +10,8 @@ Triangle::Triangle(const Vector &f, const Vector &s, const Vector &t) : mPlane(f
     mPoints[0] = f;
     mPoints[1] = s;
     mPoints[2] = t;
+    mNormal = Vector::vectorProduction(mPoints[1] - mPoints[0], mPoints[2] - mPoints[0]);
+    mNormal = mNormal / mNormal.abs();
 }
 
 Vector const& Triangle::getPoint(int index) const {

@@ -6,6 +6,7 @@ namespace Geometry3d {
     namespace Utils {
 
         int sign(double);
+        double sqr(double x);
 
     }
 

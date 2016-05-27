@@ -16,7 +16,7 @@ namespace Geometry3d {
 
         virtual Intersection intersect(Ray const &) const;
         virtual std::vector<Vector> getPoints() const;
-        virtual Vector getNormal() const {
+        virtual Vector getNormal(Vector const &point) const {
             return Vector(2, 2, 8);
         }
         virtual Shape *clone() const;

@@ -14,15 +14,15 @@ Scene::Scene(Vector camera, Parallelogram screen,
 
 Scene::Unit::Unit() { }
 
-Scene::Unit::Unit(Shape *shape, BoundingBox boundingBox, Color color) :
-    mShape(shape), mBoundingBox(boundingBox), mColor(color) { }
+Scene::Unit::Unit(Shape *shape, BoundingBox boundingBox, Color color, double reflectance) :
+    mShape(shape), mBoundingBox(boundingBox), mColor(color), mReflectance(reflectance) { }
 
-void Scene::addUnit(Shape *shape, Color color) {
-    mUnits.push_back(Unit(shape, BoundingBox(shape), color));
+void Scene::addUnit(Shape *shape, Color color, double reflectance) {
+    mUnits.push_back(Unit(shape, BoundingBox(shape), color, reflectance));
 }
 
-void Scene::addUnit(Geometry3d::Shape const &shape, Color color) {
-    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), color));
+void Scene::addUnit(Geometry3d::Shape const &shape, Color color, double reflectance) {
+    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), color, reflectance));
 }
 
 void Scene::traceRectangle(Vector const &axis0, Vector const &axis1,
@@ -70,16 +70,29 @@ void Scene::rayTrace(std::vector<std::vector<Color>> &pixels) {
     }
 }
 
-Color Scene::trace(const Ray &ray) const {
+Color Scene::trace(const Ray &ray, int curDepth) const {
     auto result = mKDTree.trace(mCamera, ray);
     if (result.second < 0) {
         return Color(0, 0, 0); // black
     }
     Color answer(0, 0, 0);
+    auto point = result.first->mShape->intersect(ray).mPoints[0];
+    auto normal = result.first->mShape->getNormal(point);
     for (auto &source : mLights) {
-        // simplest case
-        auto point = result.first->mShape->intersect(ray).mPoints[0];
-        answer = answer + result.first->mColor * source.getIntencity(point, result.first->mShape->getNormal());
+        Ray checkRay(source.mSource, point);
+        auto check = mKDTree.trace(source.mSource, checkRay);
+        if (check.first != result.first) {
+            continue;
+        }
+        if ((check.first->mShape->intersect(checkRay).mPoints[0] - point).abs() > EPS) {
+            continue;
+        }
+        answer = answer + result.first->mColor * source.getIntencity(point, normal);
+    }
+    if (result.first->mReflectance > 0 && curDepth < MAX_REFLECTION_DEPTH) {
+        Vector newPoint(point + ray.mDirection - 2. * Vector::scalarProduction(normal, ray.mDirection) * normal);
+        answer = answer * (1. - result.first->mReflectance)
+            + trace(Ray(point, newPoint), curDepth + 1) * result.first->mReflectance;
     }
     return answer;
 }

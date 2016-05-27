@@ -17,7 +17,7 @@ namespace Geometry3d {
 //        virtual Intersection intersect(Quadrangle const &) const = 0;
 //        virtual Intersection intersect(Parallelogram const &) const = 0;
         virtual std::vector<Vector> getPoints() const = 0;
-        virtual Vector getNormal() const = 0;
+        virtual Vector getNormal(Vector const &point) const = 0;
         virtual Shape* clone() const = 0;
     };
 
