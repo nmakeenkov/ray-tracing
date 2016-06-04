@@ -8,11 +8,4 @@
 #include "Parallelogram.h"
 #include "Triangle.h"
 
-namespace Geometry3d {
-
-    // Shapes
-    class Quadrangle;
-
-}
-
 #endif // GRAPHIC_LIBRARY_GEOMETRY3D_H

@@ -21,12 +21,12 @@ Scene ReadSTL::read(const char *fileName) {
 }
 
 Scene ReadSTL::readASCII(const char *fileName) {
-    Scene scene(Vector(-100, 100, 30),
+    Scene scene(Vector(-100, 75, 100),
                 Parallelogram(Vector(0, 0, 0),
                               Vector(0, 150, 0),
-                              Vector(0, 150, 60)),
+                              Vector(0, 150, 150)),
                 make_pair(700, 700));
-    scene.addLight(Vector(-200, -200, -200), 100000.);
+    scene.addLight(Vector(0, 0, 200), 100000.);
     Color blue(0, 0, 255);
     ifstream fin(fileName);
     string command;
@@ -35,6 +35,9 @@ Scene ReadSTL::readASCII(const char *fileName) {
     while (fin >> command) {
         if (command == "facet") {
             cnt++;
+            if (cnt > 10000) {
+                break;
+            }
             fin >> command; // normal
             fin >> x >> y >> z;
             fin >> command >> command; // outer loop
@@ -49,16 +52,22 @@ Scene ReadSTL::readASCII(const char *fileName) {
     }
     cerr << cnt << endl;
     fin.close();
+
+    Geometry3d::Shape *fig = (Geometry3d::Shape *)new Geometry3d::Sphere(
+           Geometry3d::Vector(15, 75, 70), 10);
+    scene.addUnit(fig, MyGL::Color(200, 0, 0), 0, 2);
+
     return scene;
 }
 
 MyGL::Scene ReadSTL::readBinary(const char *fileName) {
     Scene scene(Vector(-100, 0, 0),
                 Parallelogram(Vector(-50, -50, -50),
-                              Vector(-50, -50, 50),
+                              Vector(-50, 50, -50),
                               Vector(-50, 50, 50)),
-                make_pair(700, 700), 4);
+                make_pair(700, 700), 1);
     scene.addLight(Vector(-100, 0, 100), 60000.);
+    scene.addLight(Vector(1000, 0, 100), 100000.);
     ifstream fin(fileName, ios::binary|ios::in);
     char *tmp = new char[100];
     fin.read(tmp, 80);
@@ -87,8 +96,13 @@ MyGL::Scene ReadSTL::readBinary(const char *fileName) {
     delete tmp;
     fin.close();
 
+    /*
     Geometry3d::Shape *fig = (Geometry3d::Shape *)new Geometry3d::Sphere(
            Geometry3d::Vector(0, 50, -50), 25);
+    */
+    Geometry3d::Shape *fig = (Geometry3d::Shape *)
+    new Geometry3d::Triangle(Vector(-50, -50, -50), Vector(1500, 50, -50), Vector(-50, 50, -50));
+
     scene.addUnit(fig, MyGL::Color(0, 0, 200), 0.8);
 
     return scene;

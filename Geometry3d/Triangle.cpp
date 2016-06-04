@@ -52,6 +52,10 @@ vector<Vector> Triangle::getPoints() const {
     return result;
 }
 
+Vector Triangle::getNormal(Vector const &point) const {
+    return mNormal;
+}
+
 Shape* Triangle::clone() const {
     return new Triangle(*this);
 }

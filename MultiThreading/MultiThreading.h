@@ -39,46 +39,16 @@ namespace MultiThreading {
 
     class ThreadPool {
     public:
-        ThreadPool(int threads = -1) : mThreads() {
-            mFinished.store(false);
-            if (threads < 0) {
-                threads = std::thread::hardware_concurrency();
-            }
-            threads = std::max(1, threads);
-            for (int i = 0; i < threads; ++i) {
-                mThreads.push_back(std::thread(&doWork, this));
-            }
-        }
+        ThreadPool(int threads = -1);
 
-        void addTask(std::function<void()> const &task) {
-            mQueue.push(task);
-        }
+        void addTask(std::function<void()> const &task);
 
-        ~ThreadPool() {
-            while (!mQueue.empty()) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(TIME_OUT));
-            }
-            mFinished.store(true);
-            for (auto &thread : mThreads) {
-                thread.join();
-            }
-        }
+        ~ThreadPool();
 
     private:
         const int TIME_OUT = 100;
 
-        void doWork() {
-            while (true) {
-                if (mFinished.load()) {
-                    return;
-                }
-                std::function<void()> func;
-                if (!mQueue.tryPop(TIME_OUT, func)) {
-                    continue;
-                }
-                func();
-            }
-        }
+        void doWork();
 
         std::vector<std::thread> mThreads;
         SyncQueue<std::function<void()>> mQueue;

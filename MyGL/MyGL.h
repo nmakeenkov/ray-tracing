@@ -11,15 +11,11 @@ namespace MyGL {
     public:
         Color();
         Color(unsigned char red, unsigned char green, unsigned char blue);
+
+        Color operator*(double c) const;
+        Color operator+(Color const &other) const;
+
         double mRed, mGreen, mBlue;
-
-        Color operator*(double c) const {
-            return Color(std::min(255., c * mRed), std::min(255., c * mGreen), std::min(255., c * mBlue));
-        }
-
-        Color operator+(Color const &other) const {
-            return Color(std::min(255., mRed + other.mRed), std::min(255., mGreen + other.mGreen), std::min(255., mBlue + other.mBlue));
-        }
     };
 
 
@@ -29,28 +25,22 @@ namespace MyGL {
         Scene(Geometry3d::Vector camera, Geometry3d::Parallelogram screen,
               std::pair<int, int> resolution, int threads = -1);
 
-        void addUnit(Geometry3d::Shape *shape, Color color, double reflectance = 0);
-        void addUnit(Geometry3d::Shape const &shape, Color color, double reflectance = 0);
-        void addLight(Geometry3d::Vector const &source, double strength) {
-            mLights.push_back(LightSource(source, strength));
-        }
+        void addUnit(Geometry3d::Shape *shape, Color color, double reflectance = 0, double refractionIndex = 0);
+        void addUnit(Geometry3d::Shape const &shape, Color color, double reflectance = 0, double refractionIndex = 0);
+        void addLight(Geometry3d::Vector const &source, double strength);
         void rayTrace(std::vector<std::vector<Color>> &pixels);
 
         Geometry3d::Vector mCamera;
         Geometry3d::Parallelogram mScreen;
     private:
         static const int RECTANGLE_COUNT_SQRT = 25;
-        static const int MAX_REFLECTION_DEPTH = 5;
+        static const int MAX_REFLECTION_DEPTH = 4;
         class LightSource {
         public:
-            LightSource() { }
-            LightSource(Geometry3d::Vector const &source, double strength) : mSource(source), mStrength(strength) { }
+            LightSource();
+            LightSource(Geometry3d::Vector const &source, double strength);
 
-            double getIntencity(Geometry3d::Vector const &point, Geometry3d::Vector const &normal) const {
-                return fabs(mStrength * (Geometry3d::Vector::scalarProduction(normal, mSource - point))
-                            / pow(point.distanceTo(mSource), 3.)); // 3, as there's an extra multiplier
-                                                                   // from scalar production
-            }
+            double getIntencity(Geometry3d::Vector const &point, Geometry3d::Vector const &normal) const;
 
             Geometry3d::Vector mSource;
             double mStrength;
@@ -76,11 +66,13 @@ namespace MyGL {
         class Unit {
         public:
             Unit();
-            Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color, double reflectance = 0);
+            Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color,
+                 double reflectance = 0, double refractionIndex = 0);
             Geometry3d::Shape *mShape;
             BoundingBox mBoundingBox;
             Color mColor;\
             double mReflectance;
+            double mRefractionIndex;
         };
 
         class KDTree {
