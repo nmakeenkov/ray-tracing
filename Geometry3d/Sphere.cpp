@@ -5,7 +5,9 @@ using namespace std;
 
 Sphere::Sphere() { }
 
-Sphere::Sphere(Vector const &center, double radius) : mCenter(center), mRadius(radius) { }
+Sphere::Sphere(Vector const &center, double radius, Projection projection) : mCenter(center),
+                                                                             mRadius(radius),
+                                                                             mProjection(projection) { }
 
 Intersection Sphere::intersect(Ray const &ray) const {
     // |ray.start + t * ray.direction - center| = r
@@ -53,4 +55,30 @@ Vector Sphere::getNormal(Vector const &point) const {
 
 Shape* Sphere::clone() const {
     return new Sphere(*this);
+}
+
+constexpr double calcPI() {
+    return acos(-1);
+}
+
+const double PI = calcPI();
+
+std::pair<double, double> Sphere::getPoint2d(Vector const &point3d) const {
+    // move center to (0, 0, 0)
+    auto point = point3d - mCenter;
+
+    // spherical coords
+    double lambda = atan2(point.mY, point.mX);
+    double phi = PI / 2. - atan2(sqrtl(Utils::sqr(point.mX) + Utils::sqr(point.mY)), point.mZ);
+
+    double x = (lambda + PI) / (2. * PI);
+    double y;
+    if (mProjection == MERCATOR) {
+        y = log(tan(phi / 2. + PI / 4.));
+        y = max(0., min(1., (y + 3.) / 6.));
+    } else {
+        // EQUIRECTANGULAR
+        y = (phi + PI / 2.) / PI;
+    }
+    return make_pair(x, y);
 }

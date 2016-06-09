@@ -32,10 +32,10 @@ void Initialize() {
 
 int main(int argc, char **argv) {
 
-    auto scene = Readers::ReadSTL::read("MyGL/Examples/xBowl.stl");
+    //auto scene = Readers::ReadSTL::read("MyGL/Examples/xBowl.stl");
     //auto scene = Readers::ReadSTL::read("MyGL/Examples/monster.stl");
     //auto scene = Examples().redTriangle;
-    //auto scene = Examples().greenSphere;
+    auto scene = Examples().greenSphere;
 
     scene.rayTrace(pixels);
 

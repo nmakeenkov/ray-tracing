@@ -27,6 +27,10 @@ namespace MyGL {
 
         void addUnit(Geometry3d::Shape *shape, Color color, double reflectance = 0, double refractionIndex = 0);
         void addUnit(Geometry3d::Shape const &shape, Color color, double reflectance = 0, double refractionIndex = 0);
+        void addUnit(Geometry3d::Shape *shape, std::vector<std::vector<Color>> texture,
+                     double reflectance = 0, double refractionIndex = 0);
+        void addUnit(Geometry3d::Shape const &shape, std::vector<std::vector<Color>> texture,
+                     double reflectance = 0, double refractionIndex = 0);
         void addLight(Geometry3d::Vector const &source, double strength);
         void rayTrace(std::vector<std::vector<Color>> &pixels);
 
@@ -68,9 +72,16 @@ namespace MyGL {
             Unit();
             Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color,
                  double reflectance = 0, double refractionIndex = 0);
+            Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, std::vector<std::vector<Color>> texture,
+                 double reflectance = 0, double refractionIndex = 0);
+
+            Color getTextureColor(std::pair<double, double> const &point);
+
             Geometry3d::Shape *mShape;
             BoundingBox mBoundingBox;
-            Color mColor;\
+            enum { COLOR, TEXTURE } mType;
+            Color mColor;
+            std::vector<std::vector<Color>> mTexture;
             double mReflectance;
             double mRefractionIndex;
         };

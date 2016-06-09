@@ -17,8 +17,19 @@ Scene::Unit::Unit() { }
 
 Scene::Unit::Unit(Shape *shape, BoundingBox boundingBox, Color color,
                   double reflectance, double refractionIndex) :
-                      mShape(shape), mBoundingBox(boundingBox), mColor(color),
+                      mShape(shape), mBoundingBox(boundingBox), mType(COLOR),
+                      mColor(color), mTexture(),
                       mReflectance(reflectance), mRefractionIndex(refractionIndex) { }
+
+Scene::Unit::Unit(Shape *shape, BoundingBox boundingBox, vector<std::vector<Color>> texture,
+                  double reflectance, double refractionIndex) :
+                      mShape(shape), mBoundingBox(boundingBox), mType(TEXTURE),
+                      mColor(), mTexture(texture),
+                      mReflectance(reflectance), mRefractionIndex(refractionIndex) { }
+
+Color Scene::Unit::getTextureColor(pair<double, double> const &point) {
+    return mTexture[mTexture.size() * point.first][mTexture[0].size() * point.second];
+}
 
 void Scene::addUnit(Shape *shape, Color color, double reflectance, double refractionIndex) {
     mUnits.push_back(Unit(shape, BoundingBox(shape), color, reflectance, refractionIndex));
@@ -26,6 +37,14 @@ void Scene::addUnit(Shape *shape, Color color, double reflectance, double refrac
 
 void Scene::addUnit(Geometry3d::Shape const &shape, Color color, double reflectance, double refractionIndex) {
     mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), color, reflectance, refractionIndex));
+}
+
+void Scene::addUnit(Shape *shape, vector<vector<Color>> texture, double reflectance, double refractionIndex) {
+    mUnits.push_back(Unit(shape, BoundingBox(shape), texture, reflectance, refractionIndex));
+}
+
+void Scene::addUnit(Geometry3d::Shape const &shape, vector<vector<Color>> texture, double reflectance, double refractionIndex) {
+    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), texture, reflectance, refractionIndex));
 }
 
 void Scene::addLight(Geometry3d::Vector const &source, double strength) {
@@ -40,8 +59,8 @@ void Scene::traceRectangle(Vector const &axis0, Vector const &axis1,
     if (mResolution.second < yTo) {
         yTo = mResolution.second;
     }
-    for (int i = xFrom; i < xTo; ++i) {
         for (int j = yFrom; j < yTo; ++j) {
+    for (int i = xFrom; i < xTo; ++i) {
             Ray ray(mCamera, mScreen.getPoint(0) + (i + 0.5) * axis0 + (j + 0.5) * axis1);
             pixels[i][j] = trace(ray);
         }
@@ -72,14 +91,26 @@ void Scene::rayTrace(std::vector<std::vector<Color>> &pixels) {
     }
 }
 
+#include "../Geometry3d/Sphere.h"
+
 Color Scene::trace(const Ray &ray, int curDepth) const {
     auto result = mKDTree.trace(mCamera, ray);
     if (result.second < 0) {
         return Color(0, 0, 0); // black
     }
     Color answer(0, 0, 0);
+    auto myColor = result.first->mColor;
+
     auto point = result.first->mShape->intersect(ray).mPoints[0];
     auto normal = result.first->mShape->getNormal(point);
+
+    if (result.first->mType == Unit::TEXTURE) {
+        auto kek = (Sphere *)result.first->mShape;
+        auto mda = kek->getPoint2d(point);
+
+        myColor = result.first->getTextureColor(mda);
+    }
+
     if (result.first->mRefractionIndex > 0) {
         // refraction
         auto proj = Vector::scalarProduction(-1 * ray.mDirection, normal) * normal;
@@ -88,6 +119,8 @@ Color Scene::trace(const Ray &ray, int curDepth) const {
         auto newDirection = -1 * proj + vPlus;
         answer = trace(Ray(point + newDirection * EPS, point + newDirection), curDepth + 1);
     } else {
+        // TODO: plane lights
+        answer = answer + myColor * 0.2;
         for (auto &source : mLights) {
             Ray checkRay(source.mSource, point);
             auto check = mKDTree.trace(source.mSource, checkRay);
@@ -97,7 +130,7 @@ Color Scene::trace(const Ray &ray, int curDepth) const {
             if ((check.first->mShape->intersect(checkRay).mPoints[0] - point).abs() > EPS) {
                 continue;
             }
-            answer = answer + result.first->mColor * source.getIntencity(point, normal);
+            answer = answer + myColor * source.getIntencity(point, normal);
         }
     }
     // reflection
