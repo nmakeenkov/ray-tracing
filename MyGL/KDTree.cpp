@@ -107,11 +107,6 @@ void Scene::KDTree::build(vector<Unit> &units) {
     mRoot->mSplitAxis = Node::AXIS_X;
     mRoot->mCount = units.size();
     buildRecursively(mRoot, &units[0]);
-    /*
-    cerr << mRoot->mBoundingBox.mXmin << " " << mRoot->mBoundingBox.mXmax << "\n"
-        << mRoot->mBoundingBox.mYmin << " " << mRoot->mBoundingBox.mYmax << "\n"
-        << mRoot->mBoundingBox.mZmin << " " << mRoot->mBoundingBox.mZmax << endl;
-        */
 }
 
 void Scene::KDTree::buildRecursively(Node *node, Unit *units) {

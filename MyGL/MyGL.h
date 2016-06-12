@@ -25,12 +25,14 @@ namespace MyGL {
         Scene(Geometry3d::Vector camera, Geometry3d::Parallelogram screen,
               std::pair<int, int> resolution, int threads = -1);
 
-        void addUnit(Geometry3d::Shape *shape, Color color, double reflectance = 0, double refractionIndex = 0);
-        void addUnit(Geometry3d::Shape const &shape, Color color, double reflectance = 0, double refractionIndex = 0);
+        void addUnit(Geometry3d::Shape *shape, Color color,
+                     double reflectance = 0, double refractionIndex = 0, double refractedPart = 1);
+        void addUnit(Geometry3d::Shape const &shape, Color color,
+                     double reflectance = 0, double refractionIndex = 0, double refractedPart = 1);
         void addUnit(Geometry3d::Shape *shape, std::vector<std::vector<Color>> texture,
-                     double reflectance = 0, double refractionIndex = 0);
+                     double reflectance = 0, double refractionIndex = 0, double refractedPart = 1);
         void addUnit(Geometry3d::Shape const &shape, std::vector<std::vector<Color>> texture,
-                     double reflectance = 0, double refractionIndex = 0);
+                     double reflectance = 0, double refractionIndex = 0, double refractedPart = 1);
         void addLight(Geometry3d::Vector const &source, double strength);
         void rayTrace(std::vector<std::vector<Color>> &pixels);
 
@@ -50,7 +52,7 @@ namespace MyGL {
             double mStrength;
 
         };
-
+public:
         class BoundingBox {
         public:
             BoundingBox();
@@ -71,9 +73,9 @@ namespace MyGL {
         public:
             Unit();
             Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, Color color,
-                 double reflectance = 0, double refractionIndex = 0);
+                 double reflectance, double refractionIndex, double refractedPart);
             Unit(Geometry3d::Shape *shape, BoundingBox boundingbox, std::vector<std::vector<Color>> texture,
-                 double reflectance = 0, double refractionIndex = 0);
+                 double reflectance, double refractionIndex, double refractedPart);
 
             Color getTextureColor(std::pair<double, double> const &point);
 
@@ -84,6 +86,7 @@ namespace MyGL {
             std::vector<std::vector<Color>> mTexture;
             double mReflectance;
             double mRefractionIndex;
+            double mRefractedPart;
         };
 
         class KDTree {

@@ -7,7 +7,7 @@
 
 
 #include <bits/stdc++.h>
-
+using namespace std;
 
 namespace MyGL {
 
@@ -49,30 +49,37 @@ namespace MyGL {
         MyGL::Scene redTriangle;
         MyGL::Scene greenSphere;
 
-    private:
+    //private:
 
-        std::vector<std::vector<Color>> readBMP(const char* path) {
-            FILE* f = fopen(path, "rb");
+        static std::vector<std::vector<Color>> readBMP(const char *fileName) {
+            ifstream fin(fileName, ios::binary|ios::in);
 
-            unsigned char info[54];
-            fread(info, 1, 54, f);
-            int width = *(int*)&info[18];
-            int height = *(int*)&info[22];
+            char *info = new char[28]; // some headers
+            int width, height;
+            fin.read(info, 18);
+            fin.read((char *)&width, 4);
+            fin.read((char *)&height, 4);
+            fin.read(info, 28);
 
-            int row_padded = (width * 3 + 3) & (~3);
-            unsigned char* data = new unsigned char[row_padded];
+            int line = width * 3 + width % 4; // the length of line with padding
+            char *data = new char[line];
 
-            std::vector<std::vector<Color>> img(width, std::vector<Color>(height));
+            std::vector<std::vector<Color>> image(width, std::vector<Color>(height));
 
             for (int i = 0; i < height; i++) {
-                fread(data, 1, row_padded, f);
+                fin.read(data, line);
                 for (int j = 0; j < width * 3; j += 3) {
-                    img[j / 3][i] = Color(data[j + 2], data[j + 1], data[j]);
+                    image[j / 3][i] = Color(data[j + 2], data[j + 1], data[j]);
                 }
             }
+
             delete[] data;
-            return img;
+            delete[] info;
+            fin.close();
+
+            return image;
         }
+
     };
 }
 

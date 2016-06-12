@@ -1,9 +1,9 @@
 #ifndef GRAPHIC_LIBRARY_READSTL_H
 #define GRAPHIC_LIBRARY_READSTL_H
 
-#include "../MyGL.h"
-
 namespace MyGL {
+
+    class Scene;
 
     namespace Readers {
 
@@ -13,13 +13,11 @@ namespace MyGL {
 
         private:
             static MyGL::Scene readASCII(const char *fileName);
-
             static MyGL::Scene readBinary(const char *fileName);
         };
 
     }
 
 }
-
 
 #endif // GRAPHIC_LIBRARY_READSTL_H

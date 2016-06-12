@@ -16,13 +16,15 @@ namespace Geometry3d {
 
         virtual Intersection intersect(Ray const &) const;
         virtual std::vector<Vector> getPoints() const;
-        virtual Vector getNormal(Vector const &point) const {
-            return Vector(2, 2, 8);
-        }
+        virtual Vector getNormal(Vector const &point) const;
+        virtual std::pair<double, double> getPoint2d(Vector const &point3d) const;
         virtual Shape *clone() const;
     private:
         Vector mPoints[4];
+        Vector mNormal;
         Plane mPlane;
+        Vector mAxis0, mAxis1;
+        double mAxis0Length, mAxis1Length;
     };
 
 }

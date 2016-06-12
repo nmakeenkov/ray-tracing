@@ -16,35 +16,35 @@ Scene::Scene(Vector camera, Parallelogram screen,
 Scene::Unit::Unit() { }
 
 Scene::Unit::Unit(Shape *shape, BoundingBox boundingBox, Color color,
-                  double reflectance, double refractionIndex) :
+                  double reflectance, double refractionIndex, double refractedPart) :
                       mShape(shape), mBoundingBox(boundingBox), mType(COLOR),
                       mColor(color), mTexture(),
-                      mReflectance(reflectance), mRefractionIndex(refractionIndex) { }
+                      mReflectance(reflectance), mRefractionIndex(refractionIndex), mRefractedPart(refractedPart) { }
 
 Scene::Unit::Unit(Shape *shape, BoundingBox boundingBox, vector<std::vector<Color>> texture,
-                  double reflectance, double refractionIndex) :
+                  double reflectance, double refractionIndex, double refractedPart) :
                       mShape(shape), mBoundingBox(boundingBox), mType(TEXTURE),
                       mColor(), mTexture(texture),
-                      mReflectance(reflectance), mRefractionIndex(refractionIndex) { }
+                      mReflectance(reflectance), mRefractionIndex(refractionIndex), mRefractedPart(refractedPart) { }
 
 Color Scene::Unit::getTextureColor(pair<double, double> const &point) {
-    return mTexture[mTexture.size() * point.first][mTexture[0].size() * point.second];
+    return mTexture[int(mTexture.size() * point.first) % mTexture.size()][int(mTexture[0].size() * point.second) % mTexture[0].size()];
 }
 
-void Scene::addUnit(Shape *shape, Color color, double reflectance, double refractionIndex) {
-    mUnits.push_back(Unit(shape, BoundingBox(shape), color, reflectance, refractionIndex));
+void Scene::addUnit(Shape *shape, Color color, double reflectance, double refractionIndex, double refractedPart) {
+    mUnits.push_back(Unit(shape, BoundingBox(shape), color, reflectance, refractionIndex, refractedPart));
 }
 
-void Scene::addUnit(Geometry3d::Shape const &shape, Color color, double reflectance, double refractionIndex) {
-    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), color, reflectance, refractionIndex));
+void Scene::addUnit(Geometry3d::Shape const &shape, Color color, double reflectance, double refractionIndex, double refractedPart) {
+    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), color, reflectance, refractionIndex, refractedPart));
 }
 
-void Scene::addUnit(Shape *shape, vector<vector<Color>> texture, double reflectance, double refractionIndex) {
-    mUnits.push_back(Unit(shape, BoundingBox(shape), texture, reflectance, refractionIndex));
+void Scene::addUnit(Shape *shape, vector<vector<Color>> texture, double reflectance, double refractionIndex, double refractedPart) {
+    mUnits.push_back(Unit(shape, BoundingBox(shape), texture, reflectance, refractionIndex, refractedPart));
 }
 
-void Scene::addUnit(Geometry3d::Shape const &shape, vector<vector<Color>> texture, double reflectance, double refractionIndex) {
-    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), texture, reflectance, refractionIndex));
+void Scene::addUnit(Geometry3d::Shape const &shape, vector<vector<Color>> texture, double reflectance, double refractionIndex, double refractedPart) {
+    mUnits.push_back(Unit(shape.clone(), BoundingBox(&shape), texture, reflectance, refractionIndex, refractedPart));
 }
 
 void Scene::addLight(Geometry3d::Vector const &source, double strength) {
@@ -105,22 +105,63 @@ Color Scene::trace(const Ray &ray, int curDepth) const {
     auto normal = result.first->mShape->getNormal(point);
 
     if (result.first->mType == Unit::TEXTURE) {
-        auto kek = (Sphere *)result.first->mShape;
-        auto mda = kek->getPoint2d(point);
-
-        myColor = result.first->getTextureColor(mda);
+        auto point2d = result.first->mShape->getPoint2d(point);
+        myColor = result.first->getTextureColor(point2d);
     }
 
-    if (result.first->mRefractionIndex > 0) {
+/*
+    cerr << myColor.mRed << " " << myColor.mGreen << " " << myColor.mGreen << endl;
+    string a;
+    getline(cin, a);
+*/
+    if (result.first->mRefractionIndex > EPS) {
         // refraction
-        auto proj = Vector::scalarProduction(-1 * ray.mDirection, normal) * normal;
-        auto vPlus = -1 * ray.mDirection - proj;
+        auto projection = ray.mDirection - (Vector::scalarProduction(ray.mDirection, normal) *
+            normal); // sin a = |projection| / |ray.mDirection|
+
+        /*
+        auto vPlus = -1 * ray.mDirection - projection;
         vPlus = vPlus * (-result.first->mRefractionIndex);
-        auto newDirection = -1 * proj + vPlus;
-        answer = trace(Ray(point + newDirection * EPS, point + newDirection), curDepth + 1);
-    } else {
-        // TODO: plane lights
-        answer = answer + myColor * 0.2;
+        ////////////
+        auto projectionRefracted = result.first->mRefractionIndex *
+            projection; // now only have to make the length of newDirection the same
+                        // as ray.mDirection has
+
+        double multiplier = -sqrt(Vector::scalarProduction(ray.mDirection,
+                                                          ray.mDirection) -
+                                 Vector::scalarProduction(projectionRefracted,
+                                                          projectionRefracted));
+
+        auto newDirection = (normal * multiplier) + projectionRefracted;
+        */
+        double t = (result.first->mRefractionIndex * ray.mDirection.abs());
+        double p = t * t - Utils::sqr(projection.abs());
+        if (p > 0) {
+            p = sqrt(p);
+        } else {
+            p = 0;
+        }
+        if (Vector::scalarProduction(ray.mDirection, normal) < 0) {
+            p *= -1;
+        }
+        auto newDirection = p * normal + projection;
+/*
+        //cerr << multiplier << " " << abs(Vector::scalarProduction(ray.mDirection, normal)) << endl;
+        //cerr << projection.abs() << " " << ray.mDirection.abs() << "   " << newDirection.abs() << endl;
+        cerr << "__ " << ray.mDirection.mX << " " << ray.mDirection.mY << " " << ray.mDirection.mZ << endl;
+        cerr << normal.mX << " " << normal.mY << " " << normal.mZ << endl;
+        cerr << point.mX << " " << point.mY << " " << point.mZ << endl;
+        cerr << "__ " << newDirection.mX << " " << newDirection.mY << " " << newDirection.mZ << endl;
+
+        string s;
+        getline(cin, s);
+*/
+        answer = trace(Ray(point + newDirection * EPS, point + newDirection), curDepth + 1) * result.first->mRefractedPart;
+    }
+    if (result.first->mRefractionIndex < EPS || result.first->mRefractedPart < 1) {
+        // TODO: 0.2 as a param
+        answer = answer + myColor * 0.2 * (result.first->mRefractionIndex > EPS ? 1 - result.first->mRefractedPart : 1);
+        double summaryLight = 0;
         for (auto &source : mLights) {
             Ray checkRay(source.mSource, point);
             auto check = mKDTree.trace(source.mSource, checkRay);
@@ -130,8 +171,12 @@ Color Scene::trace(const Ray &ray, int curDepth) const {
             if ((check.first->mShape->intersect(checkRay).mPoints[0] - point).abs() > EPS) {
                 continue;
             }
-            answer = answer + myColor * source.getIntencity(point, normal);
+            summaryLight += source.getIntencity(point, normal);
         }
+        if (result.first->mRefractionIndex > EPS) {
+            summaryLight *= 1 - result.first->mRefractedPart;
+        }
+        answer = answer + myColor * summaryLight;
     }
     // reflection
     if (result.first->mReflectance > EPS && curDepth < MAX_REFLECTION_DEPTH) {

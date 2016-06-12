@@ -18,6 +18,7 @@ namespace Geometry3d {
 //        virtual Intersection intersect(Parallelogram const &) const = 0;
         virtual std::vector<Vector> getPoints() const = 0;
         virtual Vector getNormal(Vector const &point) const = 0;
+        virtual std::pair<double, double> getPoint2d(Vector const &point3d) const = 0;
         virtual Shape* clone() const = 0;
     };
 

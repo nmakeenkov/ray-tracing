@@ -32,13 +32,19 @@ void Initialize() {
 
 int main(int argc, char **argv) {
 
-    //auto scene = Readers::ReadSTL::read("MyGL/Examples/xBowl.stl");
+    auto scene = Readers::ReadSTL::read("MyGL/Examples/xBowl.stl");
     //auto scene = Readers::ReadSTL::read("MyGL/Examples/monster.stl");
     //auto scene = Examples().redTriangle;
-    auto scene = Examples().greenSphere;
-
+    //auto scene = Examples().greenSphere;
     scene.rayTrace(pixels);
 
+    /*
+    auto pic = Examples::readBMP("MyGL/Examples/water.bmp");
+    for (int i = 0; i < 700; ++i) {
+        for (int j = 0; j < 700; ++j) {
+            pixels[i][j] = pic[i * 0.7][j * 0.7];
+        }
+    } */
     //return 0;
 
     glutInit(&argc, argv);

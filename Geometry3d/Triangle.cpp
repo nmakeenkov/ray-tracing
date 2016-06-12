@@ -59,3 +59,7 @@ Vector Triangle::getNormal(Vector const &point) const {
 Shape* Triangle::clone() const {
     return new Triangle(*this);
 }
+
+std::pair<double, double> Triangle::getPoint2d(Vector const &point3d) const {
+    return make_pair(0, 0);
+}

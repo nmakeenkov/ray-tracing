@@ -5,11 +5,20 @@ using namespace Geometry3d;
 
 Parallelogram::Parallelogram() : Shape() { }
 
-Parallelogram::Parallelogram(const Vector &f, const Vector &s, const Vector &t) : Shape(), mPlane(f, s, t) {
+Parallelogram::Parallelogram(const Vector &f, const Vector &s, const Vector &t) : mPlane(f, s, t), mAxis0(s - f), mAxis1(t - f) {
     mPoints[0] = f;
     mPoints[1] = s;
     mPoints[2] = t;
     mPoints[3] = t + f - s;
+    mNormal = Vector::vectorProduction(mPoints[1] - mPoints[0], mPoints[2] - mPoints[0]);
+    mNormal = mNormal / mNormal.abs();
+    mAxis0Length = mAxis0.abs();
+    mAxis0 = mAxis0 / mAxis0Length;
+    mAxis1Length = mAxis1.abs();
+    mAxis1 = mAxis1 / mAxis1Length;
+
+    mAxis0Length = 100;
+    mAxis1Length = 100;
 }
 
 Vector const& Parallelogram::getPoint(int index) const {
@@ -43,6 +52,10 @@ Intersection Parallelogram::intersect(const Ray &ray) const {
     return Intersection();
 }
 
+Vector Parallelogram::getNormal(Vector const &point) const {
+    return mNormal;
+}
+
 vector<Vector> Parallelogram::getPoints() const {
     vector<Vector> result;
     for (int i = 0; i < 4; ++i) {
@@ -53,4 +66,12 @@ vector<Vector> Parallelogram::getPoints() const {
 
 Shape* Parallelogram::clone() const {
     return new Parallelogram(*this);
+}
+
+#include <iostream>
+
+std::pair<double, double> Parallelogram::getPoint2d(Vector const &point3d) const {
+    auto point = point3d - mPoints[0];
+    return make_pair(Vector::scalarProduction(point, mAxis0) / mAxis0Length,
+                     Vector::scalarProduction(point, mAxis1) / mAxis1Length);
 }
